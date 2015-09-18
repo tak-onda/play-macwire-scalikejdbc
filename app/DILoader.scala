@@ -6,7 +6,7 @@ import play.api.{Application, ApplicationLoader, BuiltInComponents, BuiltInCompo
 import router.Routes
 import scalikejdbc.config.DBs
 
-class MacwiredApplicationLoader extends ApplicationLoader {
+class DILoader extends ApplicationLoader {
   def load(context: Context): Application = {
     (new BuiltInComponentsFromContext(context) with AppComponents).application
   }
