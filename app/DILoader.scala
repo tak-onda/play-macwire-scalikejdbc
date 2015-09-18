@@ -2,13 +2,15 @@ import com.softwaremill.macwire._
 import controllers.{Assets, Index}
 import play.api.ApplicationLoader.Context
 import play.api.routing.Router
-import play.api.{Application, ApplicationLoader, BuiltInComponents, BuiltInComponentsFromContext}
+import play.api._
 import router.Routes
 import scalikejdbc.config.DBs
 
 class DILoader extends ApplicationLoader {
   def load(context: Context): Application = {
-    (new BuiltInComponentsFromContext(context) with AppComponents).application
+    (new BuiltInComponentsFromContext(context) with AppComponents {
+      Logger.configure(environment)
+    }).application
   }
 }
 
