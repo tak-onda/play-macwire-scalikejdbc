@@ -17,11 +17,16 @@ class Index extends Controller {
   }
 
   def user(id: Int) = Action.async {
-    Future {
-      DB.readOnly { implicit session =>
-        val u = Users.find(id).getOrElse(User(0, "unknown"))
-        Ok(Json.toJson(u))
-      }
+    findUser(id).map(u => Ok(Json.toJson(u)))
+//    val fu = findUser(id)
+//    for {
+//      u <- fu
+//    } yield Ok(Json.toJson(u))
+  }
+
+  def findUser(id: Int): Future[User] = Future {
+    DB.readOnly { implicit session =>
+      Users.find(id).getOrElse(User(0, "unknown"))
     }
   }
 
