@@ -5,7 +5,7 @@ import play.api.ApplicationLoader.Context
 import play.api.routing.Router
 import play.api._
 import router.Routes
-import scalikejdbc.{DataSourceConnectionPool, ConnectionPool}
+import scalikejdbc._
 import scalikejdbc.config.DBs
 
 class DILoader extends ApplicationLoader {
@@ -21,19 +21,25 @@ trait AppComponents extends BuiltInComponents with AppModule {
   lazy val router: Router = wire[Routes] withPrefix "/"
 }
 
+object HikariCPFactory extends ConnectionPoolFactory {
+  override def apply(url: String, user: String, password: String, settings: ConnectionPoolSettings) = {
+    val ds = new HikariDataSource()
+    ds.setDriverClassName(settings.driverName)
+    ds.setJdbcUrl(url)
+    ds.setUsername(user)
+    ds.setPassword(password)
+    ds.setAutoCommit(false)
+    ds.setConnectionTestQuery(settings.validationQuery)
+    ds.setMinimumIdle(settings.initialSize)
+    ds.setMaximumPoolSize(settings.maxSize)
+    ds.setConnectionTimeout(settings.connectionTimeoutMillis)
+    ds.setInitializationFailFast(true)
+    new DataSourceConnectionPool(ds)
+  }
+}
+
 trait AppModule {
-
+  ConnectionPoolFactoryRepository.add("hikari-cp", HikariCPFactory)
   DBs.setupAll()
-  val ds = new HikariDataSource()
-  ds.setDriverClassName("com.mysql.jdbc.Driver")
-  ds.setJdbcUrl("jdbc:mysql://localhost/play_development")
-  ds.setUsername("webapp")
-  ds.setPassword("ppabew")
-  ds.setAutoCommit(false)
-  ds.setConnectionTestQuery("select 1 as one")
-  ds.setMaximumPoolSize(5)
-  ds.setInitializationFailFast(true)
-  ConnectionPool.singleton(new DataSourceConnectionPool(ds))
-
   lazy val index = wire[Index]
 }
