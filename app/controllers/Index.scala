@@ -17,11 +17,10 @@ class Index extends Controller {
   }
 
   def user(id: Int) = Action.async {
-    findUser(id).map(u => Ok(Json.toJson(u)))
-//    val fu = findUser(id)
-//    for {
-//      u <- fu
-//    } yield Ok(Json.toJson(u))
+    val fu = findUser(id)
+    for {
+      u <- fu
+    } yield Ok(Json.toJson(u))
   }
 
   def findUser(id: Int): Future[User] = Future {
