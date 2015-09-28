@@ -23,8 +23,8 @@ case class Dao(b: SelectSQLBuilder[User], conditions: List[Option[SQLSyntax]] = 
     withSQL {
       b.where(sqls.toAndConditionOpt(conditions: _*))
     }.map(tpl(u, p)).list().apply().
-      groupBy(_._1).
-      map(g => SearchResult(g._1, g._2.map(_._2)))
+      groupBy { case (u: User, p: (Project)) => u }.
+      map { case (u: User, g: List[(User, Project)]) => SearchResult(u, g.map(_._2))}
   }
 
 }
