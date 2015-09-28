@@ -2,8 +2,8 @@ package models
 
 import scalikejdbc._
 
-case class SearchResult(user: User, projects: List[Project])
 case class UserProject(user: User, project: Project)
+case class UserProjects(user: User, projects: List[Project])
 
 trait Syntax {
   val a = Assigns.syntax("a")
@@ -22,11 +22,11 @@ case class Dao(b: SelectSQLBuilder[User], conditions: List[Option[SQLSyntax]] = 
   def up(u: SyntaxProvider[User], p: SyntaxProvider[Project])(rs: WrappedResultSet) =
     UserProject(Users(u.resultName)(rs), Projects(p.resultName)(rs))
 
-  def apply(): Iterable[SearchResult] = {
+  def apply(): Iterable[UserProjects] = {
     withSQL {
       b.where(sqls.toAndConditionOpt(conditions: _*))
     }.map(up(u, p)).list().apply().groupBy(_.user).map {
-      case (u: User, g: List[UserProject]) => SearchResult(u, g.map(_.project))
+      case (u: User, g: List[UserProject]) => UserProjects(u, g.map(_.project))
     }
   }
 
