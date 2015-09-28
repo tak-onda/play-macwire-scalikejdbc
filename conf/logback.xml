@@ -14,7 +14,7 @@
   -->
   <logger name="play" level="INFO" />
   <logger name="application" level="DEBUG" />
-  <logger name="scalikejdbc" level="INFO" />
+  <logger name="scalikejdbc" level="DEBUG" />
   <logger name="com.zaxxer.hikari" level="DEBUG" />
 
   <root level="INFO">
