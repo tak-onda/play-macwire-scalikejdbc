@@ -2,43 +2,28 @@ package models
 
 import scalikejdbc._
 
-case class UserProject(user: User, project: Project)
-case class UserProjects(user: User, projects: List[Project])
+trait Dao[T,R] {
 
-trait Syntax {
-  val a = Assigns.syntax("a")
-  val u = Users.syntax("u")
-  val p = Projects.syntax("p")
-}
+  val b: SelectSQLBuilder[T]
+  val conditions: List[Option[SQLSyntax]]
 
-case class Dao(b: SelectSQLBuilder[User], conditions: List[Option[SQLSyntax]] = Nil)(implicit s: DBSession) extends Syntax {
-
+  def eq(column: SQLSyntax, key: String): Option[SQLSyntax] = Some(sqls.eq(column, key))
   def like(column: SQLSyntax, key: String): Option[SQLSyntax] = Some(sqls.like(column, s"%${key}%"))
 
-  def byUserName(key: String) = Dao(b, like(u.name, key) :: conditions)
+  def or(conditions: Option[SQLSyntax]*): Option[SQLSyntax] = sqls.toOrConditionOpt(conditions: _*)
 
-  def byProjectName(key: String) = Dao(b, like(p.name, key) :: conditions)
+  def create(rs: WrappedResultSet): R
 
-  def up(u: SyntaxProvider[User], p: SyntaxProvider[Project])(rs: WrappedResultSet) =
-    UserProject(Users(u.resultName)(rs), Projects(p.resultName)(rs))
-
-  def apply(): Iterable[UserProjects] = {
+  def list()(implicit s: DBSession): List[R] = {
     withSQL {
       b.where(sqls.toAndConditionOpt(conditions: _*))
-    }.map(up(u, p)).list().apply().groupBy(_.user).map {
-      case (u: User, g: List[UserProject]) => UserProjects(u, g.map(_.project))
-    }
+    }.map(create).list().apply()
   }
 
-}
-
-object Dao extends Syntax {
-
-  def base: SelectSQLBuilder[User] =
-    select.from[User](Users as u).
-      innerJoin(Assigns as a).on(u.id, a.userId).
-      innerJoin(Projects as p).on(p.id, a.projectId)
-
-  def apply(implicit s: DBSession): Dao = Dao(base)
+  def single()(implicit s: DBSession): Option[R] = {
+    withSQL {
+      b.where(sqls.toAndConditionOpt(conditions: _*))
+    }.map(create).single().apply()
+  }
 
 }

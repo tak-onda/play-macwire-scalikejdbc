@@ -12,7 +12,8 @@ class Index extends Controller {
 
   implicit val userWriter = Json.writes[User]
   implicit val projectWriter = Json.writes[Project]
-  implicit val resultWriter = Json.writes[SearchResult]
+  implicit val upWriter = Json.writes[UserProject]
+  implicit val resultWriter = Json.writes[UserProjects]
 
   def index = Action {
     Ok(views.html.index("Your new application is ready."))
@@ -21,18 +22,18 @@ class Index extends Controller {
   def user(id: Int) = Action.async {
     val f = findProjects(id)
     for {
-      p <- f
-    } yield Ok(Json.toJson(p))
-//    val projects: List[Project] = for {
-//      r <- fr
-//      (u: User, p: Project) <- r
-//    } yield p
-//    OK(Json.toJson(projects))
+      up <- f
+    } yield {
+      val result = up.groupBy(_.user).map {
+        case (u: User, g: List[UserProject]) => UserProjects(u, g.map(_.project))
+      }
+      Ok(Json.toJson(result))
+    }
   }
 
-  def findProjects(id: Int): Future[Iterable[SearchResult]] = Future {
+  def findProjects(id: Int): Future[List[UserProject]] = Future {
     DB.readOnly { implicit s =>
-      Dao(s).byUserName("onda").byProjectName("rx").apply()
+      AssignDao().byUserName("a").byProjectName("r").list()
     }
   }
 
