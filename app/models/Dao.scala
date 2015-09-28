@@ -22,7 +22,7 @@ case class Dao(b: SelectSQLBuilder[User], conditions: List[Option[SQLSyntax]] = 
   def apply(): Iterable[SearchResult] = {
     withSQL {
       b.where(sqls.toAndConditionOpt(conditions: _*))
-    }.map(tpl(u, p)).list().apply().groupBy(tpl => tpl._1).map {
+    }.map(tpl(u, p)).list().apply().groupBy { case (u, p) => p }.map {
       case (u: User, tpls: List[(User, Project)]) => SearchResult(u, tpls.map(_._2))
     }
   }
